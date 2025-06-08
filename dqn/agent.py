@@ -47,7 +47,6 @@ class Replaymemory:
             batch_done.append(self.all_done[idx])
             batch_s_.append(self.all_s_[idx])
 
-
         batch_s_tensor = torch.tensor(np.asarray(batch_s), dtype=torch.float32)
         batch_a_tensor = torch.tensor(np.asarray(batch_a), dtype=torch.int64).unsqueeze(-1)
         batch_r_tensor = torch.tensor(np.asarray(batch_r), dtype=torch.float32).unsqueeze(-1)
@@ -57,6 +56,7 @@ class Replaymemory:
         return batch_s_tensor, batch_a_tensor, batch_r_tensor, batch_done_tensor, batch_s__tensor
 
 class DQN(nn.Module):
+    # 网络的输出是每个动作的Q值
     def __init__(self, n_input, n_output):
         super().__init__()
         self.net = nn.Sequential(

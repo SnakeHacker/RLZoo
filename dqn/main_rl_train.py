@@ -57,11 +57,11 @@ for episode_i in range (n_episode):
                 if done:
                     env.reset()
 
-
-        batch_s, batch_a, batch_r, batch_done, batch_s_ = agent.memo.sample() # TODO
+        batch_s, batch_a, batch_r, batch_done, batch_s_ = agent.memo.sample()
 
         target_q_values = agent.target_net(batch_s_)
         max_target_q_values = target_q_values.max(dim=1, keepdim=True)[0]
+
         targets = batch_r + agent.GAMMA * (1-batch_done)* max_target_q_values
 
         #Compute q_values
