@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from collections import deque
 import numpy as np
+import random
 
 LR_ACTOR = 1e-4
 LR_CRITIC = 1e-3
@@ -63,8 +64,8 @@ class DDPGAgent:
 
         self.critic = Critic(state_dim, action_dim)
         self.critic_target = Critic(state_dim, action_dim)
-        self.critic_target.load_state_dict(self.actor.state_dict())
-        self.critic_optimizer = optim.Adam(self.actor.parameters(), lr=LR_CRITIC)
+        self.critic_target.load_state_dict(self.critic.state_dict())
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=LR_CRITIC)
 
         self.replay_buffer = ReplayMemory(MEMORY_SIZE)
 
@@ -88,11 +89,22 @@ class DDPGAgent:
         next_actions = self.actor_target(next_states)
         target_Q = self.critic_target(next_states, next_actions.detach())
         target_Q = rewards + (GAMMA * target_Q * (1-dones))
-        crrent_Q = self.critic(states, actions)
+        current_Q = self.critic(states, actions)
 
         critic_loss = nn.MSELoss()(current_Q, target_Q)
         self.critic_optimizer.zero_grad() #clear old grad from the last step
         critic_loss.backward()
         self.critic_optimizer.step()
 
-        #TODO
+        # Update actor
+        actor_loss = -self.critic(states, self.actor(states)).mean()
+        self.actor_optimizer.zero_grad()
+        actor_loss.backward()
+        self.actor_optimizer.step()
+
+        # Update target networks of cirtic and actor
+        for target_param, param, in zip(self.actor_target.parameters(), self.actor.parameters()):
+            target_param.data.copy_(TAU * param.data  + (1 - TAU) * target_param.data)
+
+        for target_param, param, in zip(self.critic_target.parameters(), self.critic.parameters()):
+            target_param.data.copy_(TAU * param.data  + (1 - TAU) * target_param.data)
